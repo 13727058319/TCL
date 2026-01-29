@@ -369,6 +369,36 @@
         .aisle-column::before {
             content: '过道';
         }
+        .aisle-row {
+            width: 100%;
+            height: 50px;
+            background: repeating-linear-gradient(
+                90deg,
+                #e0e0e0,
+                #e0e0e0 10px,
+                #f5f5f5 10px,
+                #f5f5f5 20px
+            );
+            border: 2px dashed #999;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .aisle-row::before {
+            content: '———— 过道 ————';
+        }
+
+        .fullscreen-overlay .aisle-row {
+            height: 40px;
+            font-size: 13px;
+            margin: 8px 0;
+        }
 
         .row-label {
             min-width: 55px;
@@ -636,7 +666,7 @@
             font-weight: bold;
         }
 
-        .fullscreen-overlay {
+                .fullscreen-overlay {
             display: none;
             position: fixed;
             top: 0;
@@ -646,7 +676,7 @@
             background: white;
             z-index: 9999;
             overflow: auto;
-            padding: 30px;
+            padding: 20px;
         }
 
         .fullscreen-overlay.active {
@@ -654,18 +684,14 @@
         }
 
         .fullscreen-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #ddd;
+            display: none !important;
         }
 
         .fullscreen-title {
             font-size: 28px;
             font-weight: bold;
             color: #333;
+            display: none !important;
         }
 
         .fullscreen-hint {
@@ -676,6 +702,7 @@
             padding: 8px 15px;
             border-radius: 4px;
             border: 1px solid #ffc107;
+            display: none !important;
         }
 
         .close-fullscreen-btn {
@@ -687,6 +714,7 @@
             cursor: pointer;
             font-size: 16px;
             font-weight: bold;
+            display: none !important;
         }
 
         .close-fullscreen-btn:hover {
@@ -697,29 +725,69 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            width: 100%;
+            max-width: 100%;
+            transform-origin: top center;
         }
 
         .fullscreen-overlay .stage {
             font-size: 28px;
-            padding: 10px;
-            margin-bottom: 80px;
+            padding: 20px;
+            margin: 20px auto 40px;
             width: 100%;
-            height: 150px; 
+            max-width: 1400px;
+            min-height: 100px;
             background: url('https://cdn.jsdelivr.net/gh/13727058319/images@main/舞台封面.png') center/cover no-repeat;
             background-color: #667eea;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
-            text-align: center;      /* 文字居中 */
-            margin-left: auto;       /* 舞台左右居中 */
-            margin-right: auto;      /* 舞台左右居中 */
-    
-            /* 让文字垂直居中（如果需要） */
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+            text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
-}
+        }
 
+        /* 全屏座位区域自适应 */
+        .fullscreen-overlay .seating-area {
+            display: inline-block;
+            width: fit-content;
+            margin: 0 auto;
+        }
+
+        /* 全屏座位行自适应 */
         .fullscreen-overlay .seat-row {
-            margin-bottom: 18px;
+            margin-bottom: 10px;
+            gap: 4px;
+        }
+
+        /* 全屏座位自适应 */
+        .fullscreen-overlay .seat {
+            width: 75px;
+            height: 48px;
+        }
+
+        .fullscreen-overlay .seat-name {
+            font-size: 12px;
+        }
+
+        .fullscreen-overlay .seat-dept {
+            font-size: 10px;
+        }
+
+        .fullscreen-overlay .row-label {
+            min-width: 48px;
+            height: 48px;
+            font-size: 13px;
+        }
+
+        .fullscreen-overlay .aisle-column {
+            width: 38px;
+            height: 48px;
+            font-size: 11px;
+        }
+
+        .fullscreen-overlay .leave-list {
+            max-width: 1400px;
+            display: none !important;
         }
 
         .legend {
@@ -997,7 +1065,7 @@
             
             <!-- 全屏模式下的请假容器 -->
             <div class="leave-section fullscreen-leave">
-                <div class="panel-title">🚫 请假人员名单</div>
+                <div class="panel-title"></div>
                 <div class="leave-list" id="fullscreenLeaveList" ondrop="dropToFullscreenLeave(event)" ondragover="allowDrop(event)" ondragenter="dragEnterFullscreenLeave(event)" ondragleave="dragLeaveFullscreenLeave(event)"></div>
             </div>
 
@@ -2056,11 +2124,24 @@
             document.body.style.overflow = 'hidden';
         }
 
-        function closeFullscreen() {
+         function closeFullscreen() {
             const overlay = document.getElementById('fullscreenOverlay');
             overlay.classList.remove('active');
             document.body.style.overflow = 'auto';
         }
+
+        // 新增：ESC 键退出全屏
+        document.addEventListener('keydown', function(event) {
+            // 检测 ESC 键（keyCode 27 或 key === 'Escape'）
+            if (event.key === 'Escape' || event.keyCode === 27) {
+                const overlay = document.getElementById('fullscreenOverlay');
+                // 如果全屏模式是激活的，则关闭
+                if (overlay && overlay.classList.contains('active')) {
+                    closeFullscreen();
+                    event.preventDefault(); // 阻止默认行为
+                }
+            }
+        });
 
         function updateStats() {
             let occupied = 0;
