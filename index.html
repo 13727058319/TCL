@@ -901,7 +901,7 @@
 
         <div class="main-content">
             <div class="left-panel">
-                <div class="panel-title">👥 人员名单 (共<span id="peopleCount">232</span>人)</div>
+                <div class="panel-title">👥 人员名单 (共<span id="peopleCount">240</span>人)</div>
                 <div class="person-list" id="personList"></div>
 
                 <div class="name-input-section">
@@ -959,7 +959,7 @@
 
                 <div class="stats">
                     <div class="stat-item">
-                        <div class="stat-value" id="totalSeats">232</div>
+                        <div class="stat-value" id="totalSeats">240</div>
                         <div class="stat-label">总座位数</div>
                     </div>
                     <div class="stat-item">
@@ -967,11 +967,11 @@
                         <div class="stat-label">已分配</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="availableSeats">232</div>
+                        <div class="stat-value" id="availableSeats">240</div>
                         <div class="stat-label">剩余座位</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="remainingPeople">232</div>
+                        <div class="stat-value" id="remainingPeople">240</div>
                         <div class="stat-label">待分配人员</div>
                     </div>
                     <div class="stat-item">
@@ -1190,9 +1190,7 @@
         }
 
         function isSeatDisabled(rowIndex, seatIndex) {
-            if (rowIndex === 0) {
-                return seatIndex === 0 || seatIndex === 1 || seatIndex === 10 || seatIndex === 11;
-            }
+            
             return false;
         }
 
@@ -2074,12 +2072,12 @@
                     if (p) occupied++;
                 });
             });
-            const total = 232;
+            const total = 240;
             const availableSeats = total - occupied;
             const remainingPeople = availablePeople.length;
             const leaveCount = leavePeople.length;
 
-            document.getElementById('totalSeats').textContent = 232;
+            document.getElementById('totalSeats').textContent = 240;
             document.getElementById('occupiedSeats').textContent = occupied;
             document.getElementById('availableSeats').textContent = availableSeats;
             document.getElementById('remainingPeople').textContent = remainingPeople;
@@ -2144,7 +2142,5 @@
 </body>
 
 </html>
-
-
 
 
