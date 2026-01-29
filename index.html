@@ -116,7 +116,19 @@
             max-height: 600px;
             overflow-y: auto;
         }
+        .dept-header {
+    transition: all 0.2s;
+}
 
+.dept-header:hover {
+    filter: brightness(0.95);
+    transform: translateX(3px);
+}
+
+.dept-content {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
         .person-item {
             color: black;
             padding: 10px 12px;
@@ -684,8 +696,9 @@
 
         .fullscreen-overlay .stage {
             font-size: 28px;
-            padding: 25px;
-            margin-bottom: 40px;
+            padding: 10px;
+            margin-bottom: 80px;
+            width: 85%; 
         }
 
         .fullscreen-overlay .seat-row {
@@ -904,13 +917,7 @@
                                max="100" 
                                value="70" 
                                oninput="updateOpacity(this.value)">
-                        <div class="opacity-presets">
-                            <button class="opacity-preset-btn" onclick="setOpacity(30)">30%</button>
-                            <button class="opacity-preset-btn" onclick="setOpacity(50)">50%</button>
-                            <button class="opacity-preset-btn" onclick="setOpacity(70)">70%</button>
-                            <button class="opacity-preset-btn" onclick="setOpacity(90)">90%</button>
-                            <button class="opacity-preset-btn" onclick="setOpacity(100)">100%</button>
-                        </div>
+                        
                     </div>
 
                     <div class="dept-color-list" id="deptColorList">
@@ -1642,59 +1649,115 @@
         return;
     }
 
-    // 修改：直接使用原始顺序，不排序
+    // 按部门分组
+    const deptGroups = {};
     availablePeople.forEach((person, index) => {
-        const item = document.createElement('div');
-        item.className = 'person-item';
-        item.draggable = true;
-        item.setAttribute('data-index', index);
+        const deptName = person.dept || '无部门';
+        if (!deptGroups[deptName]) {
+            deptGroups[deptName] = [];
+        }
+        deptGroups[deptName].push({ person, index });
+    });
 
-        const color = getDeptColor(person.dept);
-        item.style.background = color;
-
-        // 删除按钮
-        const deleteBtn = document.createElement('button');
-        deleteBtn.className = 'delete-btn';
-        deleteBtn.textContent = '×';
-        deleteBtn.title = '删除此人员';
-        deleteBtn.onclick = (e) => {
-            e.stopPropagation();
-            if (confirm(`确定删除【${person.name}】吗？`)) {
-                availablePeople = availablePeople.filter(p => p.fullText !== person.fullText);
-                renderPeopleList();
-                updateStats();
-                saveLayout();
+    // 渲染每个部门组
+    Object.keys(deptGroups).forEach(deptName => {
+        const group = deptGroups[deptName];
+        const color = getDeptColor(deptName === '无部门' ? '' : deptName);
+        
+        // 部门标题（可折叠）
+        const deptHeader = document.createElement('div');
+        deptHeader.className = 'dept-header';
+        deptHeader.style.cssText = `
+            background: ${color};
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        `;
+        
+        const deptTitle = document.createElement('span');
+        deptTitle.textContent = `${deptName} (${group.length}人)`;
+        
+        const toggleIcon = document.createElement('span');
+        toggleIcon.textContent = '▼';
+        toggleIcon.style.cssText = 'transition: transform 0.3s; font-size: 12px;';
+        
+        deptHeader.appendChild(deptTitle);
+        deptHeader.appendChild(toggleIcon);
+        
+        // 人员容器（可折叠）
+        const deptContent = document.createElement('div');
+        deptContent.className = 'dept-content';
+        deptContent.style.cssText = 'display: block; margin-bottom: 15px;';
+        
+        // 添加折叠/展开功能
+        deptHeader.onclick = () => {
+            if (deptContent.style.display === 'none') {
+                deptContent.style.display = 'block';
+                toggleIcon.style.transform = 'rotate(0deg)';
+            } else {
+                deptContent.style.display = 'none';
+                toggleIcon.style.transform = 'rotate(-90deg)';
             }
         };
+        
+        // 渲染该部门下的所有人员
+        group.forEach(({ person, index }) => {
+            const item = document.createElement('div');
+            item.className = 'person-item';
+            item.draggable = true;
+            item.setAttribute('data-index', index);
+            item.style.background = color;
 
-        item.ondragstart = (e) => {
-            e.dataTransfer.setData("text", JSON.stringify({
-                type: 'person',
-                index: index,
-                person: person
-            }));
-            item.classList.add('dragging');
-            setTimeout(() => {
+            // 删除按钮
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.textContent = '×';
+            deleteBtn.title = '删除此人员';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                if (confirm(`确定删除【${person.name}】吗？`)) {
+                    availablePeople = availablePeople.filter(p => p.fullText !== person.fullText);
+                    renderPeopleList();
+                    updateStats();
+                    saveLayout();
+                }
+            };
+
+            item.ondragstart = (e) => {
+                e.dataTransfer.setData("text", JSON.stringify({
+                    type: 'person',
+                    index: index,
+                    person: person
+                }));
                 item.classList.add('dragging');
-            }, 0);
-        };
+            };
 
-        item.ondragend = () => {
-            item.classList.remove('dragging');
-        };
+            item.ondragend = () => {
+                item.classList.remove('dragging');
+            };
 
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'person-name';
-        nameDiv.textContent = person.name;
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'person-name';
+            nameDiv.textContent = person.name;
 
-        const deptDiv = document.createElement('div');
-        deptDiv.className = 'person-dept';
-        deptDiv.textContent = person.dept || '无部门';
+            const deptDiv = document.createElement('div');
+            deptDiv.className = 'person-dept';
+            deptDiv.textContent = person.dept || '无部门';
 
-        item.appendChild(deleteBtn);
-        item.appendChild(nameDiv);
-        item.appendChild(deptDiv);
-        personList.appendChild(item);
+            item.appendChild(deleteBtn);
+            item.appendChild(nameDiv);
+            item.appendChild(deptDiv);
+            deptContent.appendChild(item);
+        });
+        
+        personList.appendChild(deptHeader);
+        personList.appendChild(deptContent);
     });
 }
 
@@ -2064,6 +2127,5 @@
 </body>
 
 </html>
-
 
 
