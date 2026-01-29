@@ -205,7 +205,8 @@
         }
 
         .stage {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: url('https://raw.githubusercontent.com/13727058319/images/main/舞台封面.png') center/cover no-repeat;
+            background-color: #667eea; /* 图片加载失败时的备用颜色 */
             color: white;
             text-align: center;
             padding: 20px;
@@ -214,6 +215,10 @@
             font-size: 24px;
             font-weight: bold;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7); /* 添加文字阴影让文字更清晰 */
+            text-align: center;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .seating-area {
@@ -698,8 +703,20 @@
             font-size: 28px;
             padding: 10px;
             margin-bottom: 80px;
-            width: 85%; 
-        }
+            width: 80%;
+            height: 130px; 
+            background: url('https://cdn.jsdelivr.net/gh/13727058319/images@main/舞台封面.png') center/cover no-repeat;
+            background-color: #667eea;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            text-align: center;      /* 文字居中 */
+            margin-left: auto;       /* 舞台左右居中 */
+            margin-right: auto;      /* 舞台左右居中 */
+    
+            /* 让文字垂直居中（如果需要） */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+}
 
         .fullscreen-overlay .seat-row {
             margin-bottom: 18px;
@@ -927,7 +944,7 @@
             </div>
 
             <div class="right-panel">
-                <div class="stage">🎬 舞 台 🎬</div>
+                <div class="stage">现场座位图</div>
                 <div class="seating-area" id="seatingArea"></div>
                 
                 <!-- 新增：请假人员容器 -->
@@ -975,7 +992,7 @@
             <button class="close-fullscreen-btn" onclick="closeFullscreen()">✖ 关闭全屏</button>
         </div>
         <div class="fullscreen-seating">
-            <div class="stage">🎬 舞 台 🎬</div>
+            <div class="stage">现场座位图</div>
             <div class="seating-area" id="fullscreenSeatingArea"></div>
             
             <!-- 全屏模式下的请假容器 -->
