@@ -1949,121 +1949,132 @@
         }
 
         function createSeat(person, rowIndex, side, seatIndex) {
-            const seatCell = document.createElement('div');
-            seatCell.className = 'seat-cell';
-            
-            const seat = document.createElement('div');
-            seat.className = 'seat';
-            
-            if (person) {
-                seat.classList.add('occupied');
-                seat.style.background = getDeptColor(person.dept);
-                
-                const dragHint = document.createElement('div');
-                dragHint.className = 'drag-hint';
-                dragHint.textContent = '拖拽';
-                seat.appendChild(dragHint);
+    const seatCell = document.createElement('div');
+    seatCell.className = 'seat-cell';
+    
+    const seat = document.createElement('div');
+    seat.className = 'seat';
+    
+    if (person) {
+        seat.classList.add('occupied');
+        seat.style.background = getDeptColor(person.dept);
+        
+        const dragHint = document.createElement('div');
+        dragHint.className = 'drag-hint';
+        dragHint.textContent = '拖拽';
+        seat.appendChild(dragHint);
 
-                const nameDiv = document.createElement('div');
-                nameDiv.className = 'seat-name';
-                nameDiv.textContent = person.name;
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'seat-name';
+        nameDiv.textContent = person.name;
 
-                const deptDiv = document.createElement('div');
-                deptDiv.className = 'seat-dept';
-                deptDiv.textContent = person.dept || '无部门';
+        const deptDiv = document.createElement('div');
+        deptDiv.className = 'seat-dept';
+        deptDiv.textContent = person.dept || '无部门';
 
-                seat.appendChild(nameDiv);
-                seat.appendChild(deptDiv);
-            }
+        seat.appendChild(nameDiv);
+        seat.appendChild(deptDiv);
+    }
 
-            seat.onclick = (e) => {
-                if (seat.classList.contains('occupied') && !seat.classList.contains('dragging')) {
-                    if (confirm(`确定将【${person.name}】从该座位移除？`)) {
-                        seatingData[rowIndex][side][seatIndex] = null;
-                        availablePeople.push(person);
-                        renderSeating('seatingArea');
-                        renderSeating('fullscreenSeatingArea');
-                        renderPeopleList();
-                        updateStats();
-                        saveLayout();
-                    }
-                }
-                e.stopPropagation();
-            };
-
-            seat.draggable = true;
-
-            seat.ondragstart = (e) => {
-                if (seat.classList.contains('occupied')) {
-                    e.dataTransfer.setData("text", JSON.stringify({
-                        type: 'seat',
-                        rowIndex: rowIndex,
-                        side: side,
-                        seatIndex: seatIndex,
-                        person: person
-                    }));
-                    seat.classList.add('dragging');
-                }
-            };
-
-            seat.ondragend = (e) => {
-                seat.classList.remove('dragging');
-                seat.classList.remove('drag-over');
-                seat.classList.remove('swap-target');
-                document.querySelectorAll('.seat').forEach(s => {
-                    s.classList.remove('swap-target');
-                });
-            };
-
-            seat.ondragover = (e) => {
-                e.preventDefault();
-                if (seat.classList.contains('occupied')) {
-                    seat.classList.add('swap-target');
-                } else {
-                    seat.classList.add('drag-over');
-                }
-            };
-
-            seat.ondragleave = (e) => {
-                if (!e.currentTarget.contains(e.relatedTarget)) {
-                    seat.classList.remove('drag-over');
-                    seat.classList.remove('swap-target');
-                }
-            };
-
-            seat.ondrop = (e) => {
-                e.preventDefault();
-                seat.classList.remove('drag-over');
-                seat.classList.remove('swap-target');
-
-                const data = JSON.parse(ev.dataTransfer.getData("text"));
-                if (data.type === 'person' && !person) {
-                    availablePeople = availablePeople.filter(p => p.fullText !== data.person.fullText);
-                    seatingData[rowIndex][side][seatIndex] = data.person;
-                }
-                else if (data.type === 'leave' && !person) {
-                    leavePeople.splice(data.index, 1);
-                    seatingData[rowIndex][side][seatIndex] = data.person;
-                }
-                else if (data.type === 'seat' && (data.rowIndex !== rowIndex || data.side !== side || data.seatIndex !== seatIndex)) {
-                    const sourcePerson = seatingData[data.rowIndex][data.side][data.seatIndex];
-                    const targetPerson = seatingData[rowIndex][side][seatIndex];
-                    seatingData[data.rowIndex][data.side][data.seatIndex] = targetPerson;
-                    seatingData[rowIndex][side][seatIndex] = sourcePerson;
-                }
-
+    seat.onclick = (e) => {
+        if (seat.classList.contains('occupied') && !seat.classList.contains('dragging')) {
+            if (confirm(`确定将【${person.name}】从该座位移除？`)) {
+                seatingData[rowIndex][side][seatIndex] = null;
+                availablePeople.push(person);
                 renderSeating('seatingArea');
                 renderSeating('fullscreenSeatingArea');
                 renderPeopleList();
-                renderLeaveList();
-                renderFullscreenLeaveList();
                 updateStats();
                 saveLayout();
-            };
-
-            seatCell.appendChild(seat);
-            return seatCell;
+            }
         }
+        e.stopPropagation();
+    };
+
+    seat.draggable = true;
+
+    seat.ondragstart = (e) => {
+        if (seat.classList.contains('occupied')) {
+            e.dataTransfer.setData("text", JSON.stringify({
+                type: 'seat',
+                rowIndex: rowIndex,
+                side: side,
+                seatIndex: seatIndex,
+                person: person
+            }));
+            seat.classList.add('dragging');
+        } else {
+            e.preventDefault();
+        }
+    };
+
+    seat.ondragend = (e) => {
+        seat.classList.remove('dragging');
+        seat.classList.remove('drag-over');
+        seat.classList.remove('swap-target');
+        document.querySelectorAll('.seat').forEach(s => {
+            s.classList.remove('swap-target');
+            s.classList.remove('drag-over');
+        });
+    };
+
+    seat.ondragover = (e) => {
+        e.preventDefault();
+        if (seat.classList.contains('occupied')) {
+            seat.classList.add('swap-target');
+        } else {
+            seat.classList.add('drag-over');
+        }
+    };
+
+    seat.ondragleave = (e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) {
+            seat.classList.remove('drag-over');
+            seat.classList.remove('swap-target');
+        }
+    };
+
+    seat.ondrop = (e) => {
+        e.preventDefault();
+        seat.classList.remove('drag-over');
+        seat.classList.remove('swap-target');
+
+        try {
+            const data = JSON.parse(e.dataTransfer.getData("text"));
+            
+            if (data.type === 'person' && !person) {
+                // 从人员列表拖拽到空座位
+                availablePeople = availablePeople.filter(p => p.fullText !== data.person.fullText);
+                seatingData[rowIndex][side][seatIndex] = data.person;
+            }
+            else if (data.type === 'leave' && !person) {
+                // 从请假列表拖拽到空座位
+                leavePeople.splice(data.index, 1);
+                seatingData[rowIndex][side][seatIndex] = data.person;
+            }
+            else if (data.type === 'seat' && (data.rowIndex !== rowIndex || data.side !== side || data.seatIndex !== seatIndex)) {
+                // 座位互换
+                const sourcePerson = seatingData[data.rowIndex][data.side][data.seatIndex];
+                const targetPerson = seatingData[rowIndex][side][seatIndex];
+                seatingData[data.rowIndex][data.side][data.seatIndex] = targetPerson;
+                seatingData[rowIndex][side][seatIndex] = sourcePerson;
+            }
+
+            renderSeating('seatingArea');
+            renderSeating('fullscreenSeatingArea');
+            renderPeopleList();
+            renderLeaveList();
+            renderFullscreenLeaveList();
+            updateStats();
+            saveLayout();
+        } catch (error) {
+            console.error('拖放操作失败:', error);
+        }
+    };
+
+    seatCell.appendChild(seat);
+    return seatCell;
+}
 
         function renderSeating(containerId) {
             const container = document.getElementById(containerId);
