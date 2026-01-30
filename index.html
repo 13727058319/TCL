@@ -969,7 +969,7 @@
 
         <div class="main-content">
             <div class="left-panel">
-                <div class="panel-title">👥 人员名单 (共<span id="peopleCount">240</span>人)</div>
+                <div class="panel-title">👥 人员名单 (共<span id="peopleCount">243</span>人)</div>
                 <div class="person-list" id="personList"></div>
 
                 <div class="name-input-section">
@@ -984,7 +984,7 @@
                     <textarea id="nameInput" placeholder="请输入姓名，每行一个，例如：&#10;战略与运营管理部-旋总&#10;战略与运营管理部-小袁"></textarea>
                     <button onclick="appendNames()" class="append-btn">➕ 追加人员</button>
                     <button onclick="importNames()">🔄 导入名单（覆盖）</button>
-                    <button onclick="useDefaultNames()" style="background: #607d8b; margin-left: 8px;">使用默认编号(1-232)</button>
+                    <button onclick="useDefaultNames()" style="background: #607d8b; margin-left: 8px;">使用默认编号(1-243)</button>
                 </div>
 
                 <div class="color-config-section">
@@ -1027,7 +1027,7 @@
 
                 <div class="stats">
                     <div class="stat-item">
-                        <div class="stat-value" id="totalSeats">240</div>
+                        <div class="stat-value" id="totalSeats">243</div>
                         <div class="stat-label">总座位数</div>
                     </div>
                     <div class="stat-item">
@@ -1035,11 +1035,11 @@
                         <div class="stat-label">已分配</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="availableSeats">240</div>
+                        <div class="stat-value" id="availableSeats">243</div>
                         <div class="stat-label">剩余座位</div>
                     </div>
                     <div class="stat-item">
-                        <div class="stat-value" id="remainingPeople">240</div>
+                        <div class="stat-value" id="remainingPeople">243</div>
                         <div class="stat-label">待分配人员</div>
                     </div>
                     <div class="stat-item">
@@ -1258,16 +1258,16 @@
         }
 
         function isSeatDisabled(rowIndex, seatIndex) {
-            
             return false;
         }
 
         function initSeatingStructure() {
             seatingData = [];
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 9; i++) {  // 改为9行
                 seatingData.push({
-                    leftSeats: Array(12).fill(null),
-                    rightSeats: Array(12).fill(null)
+                    leftSeats: Array(9).fill(null),    // 第一列9个座位
+                    middleSeats: Array(9).fill(null),  // 第二列9个座位
+                    rightSeats: Array(9).fill(null)    // 第三列9个座位
                 });
             }
         }
@@ -1287,7 +1287,7 @@
             });
 
             seatingData.forEach(row => {
-                [...row.leftSeats, ...row.rightSeats].forEach(person => {
+                [...row.leftSeats, ...row.middleSeats, ...row.rightSeats].forEach(person => {
                     if (person && person.dept) {
                         departments.add(person.dept);
                     }
@@ -1583,7 +1583,7 @@
 
         function initPeople() {
             availablePeople = [];
-            for (let i = 1; i <= 232; i++) {
+            for (let i = 1; i <= 243; i++) {
                 availablePeople.push({
                     dept: '',
                     name: i.toString(),
@@ -1600,7 +1600,7 @@
             
             availablePeople = [];
             leavePeople = [];
-            for (let i = 1; i <= 232; i++) {
+            for (let i = 1; i <= 243; i++) {
                 availablePeople.push({
                     dept: '',
                     name: i.toString(),
@@ -1626,10 +1626,14 @@
                     row.leftSeats.forEach(person => {
                         if (person) availablePeople.push(person);
                     });
+                    row.middleSeats.forEach(person => {
+                        if (person) availablePeople.push(person);
+                    });
                     row.rightSeats.forEach(person => {
                         if (person) availablePeople.push(person);
                     });
                     row.leftSeats.fill(null);
+                    row.middleSeats.fill(null);
                     row.rightSeats.fill(null);
                 });
                 leavePeople.forEach(person => {
@@ -1721,134 +1725,133 @@
         }
 
         function renderPeopleList() {
-    const personList = document.getElementById('personList');
-    const peopleCount = document.getElementById('peopleCount');
-    personList.innerHTML = '';
+            const personList = document.getElementById('personList');
+            const peopleCount = document.getElementById('peopleCount');
+            personList.innerHTML = '';
 
-    peopleCount.textContent = availablePeople.length;
+            peopleCount.textContent = availablePeople.length;
 
-    if (availablePeople.length === 0) {
-        personList.innerHTML = '<p style="color: #999; font-size: 12px; text-align: center; padding: 20px;">暂无待分配人员</p>';
-        return;
-    }
-
-    // 按部门分组
-    const deptGroups = {};
-    availablePeople.forEach((person, index) => {
-        const deptName = person.dept || '无部门';
-        if (!deptGroups[deptName]) {
-            deptGroups[deptName] = [];
-        }
-        deptGroups[deptName].push({ person, index });
-    });
-
-    // 渲染每个部门组
-    Object.keys(deptGroups).forEach(deptName => {
-        const group = deptGroups[deptName];
-        const color = getDeptColor(deptName === '无部门' ? '' : deptName);
-        
-        // 部门标题（可折叠）
-        const deptHeader = document.createElement('div');
-        deptHeader.className = 'dept-header';
-        deptHeader.style.cssText = `
-            background: ${color};
-            padding: 10px 12px;
-            margin-bottom: 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            user-select: none;
-        `;
-        
-        const deptTitle = document.createElement('span');
-        deptTitle.textContent = `${deptName} (${group.length}人)`;
-        
-        const toggleIcon = document.createElement('span');
-        toggleIcon.textContent = '▼';
-        toggleIcon.style.cssText = 'transition: transform 0.3s; font-size: 12px;';
-        
-        deptHeader.appendChild(deptTitle);
-        deptHeader.appendChild(toggleIcon);
-        
-        // 人员容器（可折叠）
-        const deptContent = document.createElement('div');
-        deptContent.className = 'dept-content';
-        deptContent.style.cssText = 'display: block; margin-bottom: 15px;';
-        
-        // 添加折叠/展开功能
-        deptHeader.onclick = () => {
-            if (deptContent.style.display === 'none') {
-                deptContent.style.display = 'block';
-                toggleIcon.style.transform = 'rotate(0deg)';
-            } else {
-                deptContent.style.display = 'none';
-                toggleIcon.style.transform = 'rotate(-90deg)';
+            if (availablePeople.length === 0) {
+                personList.innerHTML = '<p style="color: #999; font-size: 12px; text-align: center; padding: 20px;">暂无待分配人员</p>';
+                return;
             }
-        };
-        
-        // 渲染该部门下的所有人员
-        group.forEach(({ person, index }) => {
-            const item = document.createElement('div');
-            item.className = 'person-item';
-            item.draggable = true;
-            item.setAttribute('data-index', index);
-            item.style.background = color;
 
-            // 删除按钮
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'delete-btn';
-            deleteBtn.textContent = '×';
-            deleteBtn.title = '删除此人员';
-            deleteBtn.onclick = (e) => {
-                e.stopPropagation();
-                if (confirm(`确定删除【${person.name}】吗？`)) {
-                    availablePeople = availablePeople.filter(p => p.fullText !== person.fullText);
-                    renderPeopleList();
-                    updateStats();
-                    saveLayout();
+            // 按部门分组
+            const deptGroups = {};
+            availablePeople.forEach((person, index) => {
+                const deptName = person.dept || '无部门';
+                if (!deptGroups[deptName]) {
+                    deptGroups[deptName] = [];
                 }
-            };
+                deptGroups[deptName].push({ person, index });
+            });
 
-            item.ondragstart = (e) => {
-                e.dataTransfer.setData("text", JSON.stringify({
-                    type: 'person',
-                    index: index,
-                    person: person
-                }));
-                item.classList.add('dragging');
-            };
+            // 渲染每个部门组
+            Object.keys(deptGroups).forEach(deptName => {
+                const group = deptGroups[deptName];
+                const color = getDeptColor(deptName === '无部门' ? '' : deptName);
+                
+                // 部门标题（可折叠）
+                const deptHeader = document.createElement('div');
+                deptHeader.className = 'dept-header';
+                deptHeader.style.cssText = `
+                    background: ${color};
+                    padding: 10px 12px;
+                    margin-bottom: 8px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    user-select: none;
+                `;
+                
+                const deptTitle = document.createElement('span');
+                deptTitle.textContent = `${deptName} (${group.length}人)`;
+                
+                const toggleIcon = document.createElement('span');
+                toggleIcon.textContent = '▼';
+                toggleIcon.style.cssText = 'transition: transform 0.3s; font-size: 12px;';
+                
+                deptHeader.appendChild(deptTitle);
+                deptHeader.appendChild(toggleIcon);
+                
+                // 人员容器（可折叠）
+                const deptContent = document.createElement('div');
+                deptContent.className = 'dept-content';
+                deptContent.style.cssText = 'display: block; margin-bottom: 15px;';
+                
+                // 添加折叠/展开功能
+                deptHeader.onclick = () => {
+                    if (deptContent.style.display === 'none') {
+                        deptContent.style.display = 'block';
+                        toggleIcon.style.transform = 'rotate(0deg)';
+                    } else {
+                        deptContent.style.display = 'none';
+                        toggleIcon.style.transform = 'rotate(-90deg)';
+                    }
+                };
+                
+                // 渲染该部门下的所有人员
+                group.forEach(({ person, index }) => {
+                    const item = document.createElement('div');
+                    item.className = 'person-item';
+                    item.draggable = true;
+                    item.setAttribute('data-index', index);
+                    item.style.background = color;
 
-            item.ondragend = () => {
-                item.classList.remove('dragging');
-            };
+                    // 删除按钮
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'delete-btn';
+                    deleteBtn.textContent = '×';
+                    deleteBtn.title = '删除此人员';
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (confirm(`确定删除【${person.name}】吗？`)) {
+                            availablePeople = availablePeople.filter(p => p.fullText !== person.fullText);
+                            renderPeopleList();
+                            updateStats();
+                            saveLayout();
+                        }
+                    };
 
-            const nameDiv = document.createElement('div');
-            nameDiv.className = 'person-name';
-            nameDiv.textContent = person.name;
+                    item.ondragstart = (e) => {
+                        e.dataTransfer.setData("text", JSON.stringify({
+                            type: 'person',
+                            index: index,
+                            person: person
+                        }));
+                        item.classList.add('dragging');
+                    };
 
-            const deptDiv = document.createElement('div');
-            deptDiv.className = 'person-dept';
-            deptDiv.textContent = person.dept || '无部门';
+                    item.ondragend = () => {
+                        item.classList.remove('dragging');
+                    };
 
-            item.appendChild(deleteBtn);
-            item.appendChild(nameDiv);
-            item.appendChild(deptDiv);
-            deptContent.appendChild(item);
-        });
-        
-        personList.appendChild(deptHeader);
-        personList.appendChild(deptContent);
-    });
-}
+                    const nameDiv = document.createElement('div');
+                    nameDiv.className = 'person-name';
+                    nameDiv.textContent = person.name;
 
-                function renderSeating(containerId) {
+                    const deptDiv = document.createElement('div');
+                    deptDiv.className = 'person-dept';
+                    deptDiv.textContent = person.dept || '无部门';
+
+                    item.appendChild(deleteBtn);
+                    item.appendChild(nameDiv);
+                    item.appendChild(deptDiv);
+                    deptContent.appendChild(item);
+                });
+                
+                personList.appendChild(deptHeader);
+                personList.appendChild(deptContent);
+            });
+        }
+
+        function renderSeating(containerId) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
-
-            seatingData.forEach((row, rowIndex) => {
+                        seatingData.forEach((row, rowIndex) => {
                 const seatRow = document.createElement('div');
                 seatRow.className = 'seat-row';
 
@@ -1857,6 +1860,7 @@
                 rowLabel.textContent = `第${rowIndex + 1}行`;
                 seatRow.appendChild(rowLabel);
 
+                // 第一列（左侧9个座位）
                 row.leftSeats.forEach((person, seatIndex) => {
                     const seatCell = document.createElement('div');
                     seatCell.className = 'seat-cell';
@@ -1864,10 +1868,7 @@
                     const seat = document.createElement('div');
                     seat.className = 'seat';
                     
-                    if (isSeatDisabled(rowIndex, seatIndex)) {
-                        seat.classList.add('disabled');
-                    } 
-                    else if (person) {
+                    if (person) {
                         seat.classList.add('occupied');
                         seat.style.background = getDeptColor(person.dept);
                         
@@ -1903,89 +1904,209 @@
                         e.stopPropagation();
                     };
 
-                    if (!seat.classList.contains('disabled')) {
-                        seat.draggable = true;
+                    seat.draggable = true;
 
-                        seat.ondragstart = (e) => {
-                            if (seat.classList.contains('occupied')) {
-                                e.dataTransfer.setData("text", JSON.stringify({
-                                    type: 'seat',
-                                    rowIndex: rowIndex,
-                                    side: 'leftSeats',
-                                    seatIndex: seatIndex,
-                                    person: person
-                                }));
-                                seat.classList.add('dragging');
-                                setTimeout(() => {
-                                    seat.classList.add('dragging');
-                                }, 0);
-                            }
-                        };
+                    seat.ondragstart = (e) => {
+                        if (seat.classList.contains('occupied')) {
+                            e.dataTransfer.setData("text", JSON.stringify({
+                                type: 'seat',
+                                rowIndex: rowIndex,
+                                side: 'leftSeats',
+                                seatIndex: seatIndex,
+                                person: person
+                            }));
+                            seat.classList.add('dragging');
+                        }
+                    };
 
-                        seat.ondragend = (e) => {
-                            seat.classList.remove('dragging');
+                    seat.ondragend = (e) => {
+                        seat.classList.remove('dragging');
+                        seat.classList.remove('drag-over');
+                        seat.classList.remove('swap-target');
+                        document.querySelectorAll('.seat').forEach(s => {
+                            s.classList.remove('swap-target');
+                        });
+                    };
+
+                    seat.ondragover = (e) => {
+                        e.preventDefault();
+                        if (seat.classList.contains('occupied')) {
+                            seat.classList.add('swap-target');
+                        } else {
+                            seat.classList.add('drag-over');
+                        }
+                    };
+
+                    seat.ondragleave = (e) => {
+                        if (!e.currentTarget.contains(e.relatedTarget)) {
                             seat.classList.remove('drag-over');
                             seat.classList.remove('swap-target');
-                            document.querySelectorAll('.seat').forEach(s => {
-                                s.classList.remove('swap-target');
-                            });
-                        };
+                        }
+                    };
 
-                        seat.ondragover = (e) => {
-                            e.preventDefault();
-                            if (seat.classList.contains('occupied')) {
-                                seat.classList.add('swap-target');
-                            } else {
-                                seat.classList.add('drag-over');
-                            }
-                        };
+                    seat.ondrop = (e) => {
+                        e.preventDefault();
+                        seat.classList.remove('drag-over');
+                        seat.classList.remove('swap-target');
 
-                        seat.ondragleave = (e) => {
-                            if (!e.currentTarget.contains(e.relatedTarget)) {
-                                seat.classList.remove('drag-over');
-                                seat.classList.remove('swap-target');
-                            }
-                        };
+                        const data = JSON.parse(e.dataTransfer.getData("text"));
+                        if (data.type === 'person' && !person) {
+                            availablePeople = availablePeople.filter(p => p.fullText !== data.person.fullText);
+                            seatingData[rowIndex].leftSeats[seatIndex] = data.person;
+                        }
+                        else if (data.type === 'leave' && !person) {
+                            leavePeople.splice(data.index, 1);
+                            seatingData[rowIndex].leftSeats[seatIndex] = data.person;
+                        }
+                        else if (data.type === 'seat' && (data.rowIndex !== rowIndex || data.side !== 'leftSeats' || data.seatIndex !== seatIndex)) {
+                            const sourcePerson = seatingData[data.rowIndex][data.side][data.seatIndex];
+                            const targetPerson = seatingData[rowIndex].leftSeats[seatIndex];
+                            seatingData[data.rowIndex][data.side][data.seatIndex] = targetPerson;
+                            seatingData[rowIndex].leftSeats[seatIndex] = sourcePerson;
+                        }
 
-                        seat.ondrop = (e) => {
-                            e.preventDefault();
-                            seat.classList.remove('drag-over');
-                            seat.classList.remove('swap-target');
-
-                            const data = JSON.parse(e.dataTransfer.getData("text"));
-                            if (data.type === 'person' && !person) {
-                                availablePeople = availablePeople.filter(p => p.fullText !== data.person.fullText);
-                                seatingData[rowIndex].leftSeats[seatIndex] = data.person;
-                            }
-                            else if (data.type === 'leave' && !person) {
-                                leavePeople.splice(data.index, 1);
-                                seatingData[rowIndex].leftSeats[seatIndex] = data.person;
-                            }
-                            else if (data.type === 'seat' && (data.rowIndex !== rowIndex || data.side !== 'leftSeats' || data.seatIndex !== seatIndex)) {
-                                const sourcePerson = seatingData[data.rowIndex][data.side][data.seatIndex];
-                                const targetPerson = seatingData[rowIndex].leftSeats[seatIndex];
-                                seatingData[data.rowIndex][data.side][data.seatIndex] = targetPerson;
-                                seatingData[rowIndex].leftSeats[seatIndex] = sourcePerson;
-                            }
-
-                            renderSeating('seatingArea');
-                            renderSeating('fullscreenSeatingArea');
-                            renderPeopleList();
-                            renderLeaveList();
-                            renderFullscreenLeaveList();
-                            updateStats();
-                            saveLayout();
-                        };
-                    }
+                        renderSeating('seatingArea');
+                        renderSeating('fullscreenSeatingArea');
+                        renderPeopleList();
+                        renderLeaveList();
+                        renderFullscreenLeaveList();
+                        updateStats();
+                        saveLayout();
+                    };
 
                     seatCell.appendChild(seat);
                     seatRow.appendChild(seatCell);
                 });
 
-                const aisle = document.createElement('div');
-                aisle.className = 'aisle-column';
-                seatRow.appendChild(aisle);
+                // 第一个过道
+                const aisle1 = document.createElement('div');
+                aisle1.className = 'aisle-column';
+                seatRow.appendChild(aisle1);
 
+                // 第二列（中间9个座位）
+                row.middleSeats.forEach((person, seatIndex) => {
+                    const seatCell = document.createElement('div');
+                    seatCell.className = 'seat-cell';
+                    
+                    const seat = document.createElement('div');
+                    seat.className = 'seat';
+                    
+                    if (person) {
+                        seat.classList.add('occupied');
+                        seat.style.background = getDeptColor(person.dept);
+                        
+                        const dragHint = document.createElement('div');
+                        dragHint.className = 'drag-hint';
+                        dragHint.textContent = '拖拽';
+                        seat.appendChild(dragHint);
+
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'seat-name';
+                        nameDiv.textContent = person.name;
+
+                        const deptDiv = document.createElement('div');
+                        deptDiv.className = 'seat-dept';
+                        deptDiv.textContent = person.dept || '无部门';
+
+                        seat.appendChild(nameDiv);
+                        seat.appendChild(deptDiv);
+                    }
+
+                    seat.onclick = (e) => {
+                        if (seat.classList.contains('occupied') && !seat.classList.contains('dragging')) {
+                            if (confirm(`确定将【${person.name}】从该座位移除？`)) {
+                                seatingData[rowIndex].middleSeats[seatIndex] = null;
+                                availablePeople.push(person);
+                                renderSeating('seatingArea');
+                                renderSeating('fullscreenSeatingArea');
+                                renderPeopleList();
+                                updateStats();
+                                saveLayout();
+                            }
+                        }
+                        e.stopPropagation();
+                    };
+
+                    seat.draggable = true;
+
+                    seat.ondragstart = (e) => {
+                        if (seat.classList.contains('occupied')) {
+                            e.dataTransfer.setData("text", JSON.stringify({
+                                type: 'seat',
+                                rowIndex: rowIndex,
+                                side: 'middleSeats',
+                                seatIndex: seatIndex,
+                                person: person
+                            }));
+                            seat.classList.add('dragging');
+                        }
+                    };
+
+                    seat.ondragend = (e) => {
+                        seat.classList.remove('dragging');
+                        seat.classList.remove('drag-over');
+                        seat.classList.remove('swap-target');
+                        document.querySelectorAll('.seat').forEach(s => {
+                            s.classList.remove('swap-target');
+                        });
+                    };
+
+                    seat.ondragover = (e) => {
+                        e.preventDefault();
+                        if (seat.classList.contains('occupied')) {
+                            seat.classList.add('swap-target');
+                        } else {
+                            seat.classList.add('drag-over');
+                        }
+                    };
+
+                    seat.ondragleave = (e) => {
+                        if (!e.currentTarget.contains(e.relatedTarget)) {
+                            seat.classList.remove('drag-over');
+                            seat.classList.remove('swap-target');
+                        }
+                    };
+
+                    seat.ondrop = (e) => {
+                        e.preventDefault();
+                        seat.classList.remove('drag-over');
+                        seat.classList.remove('swap-target');
+
+                        const data = JSON.parse(e.dataTransfer.getData("text"));
+                        if (data.type === 'person' && !person) {
+                            availablePeople = availablePeople.filter(p => p.fullText !== data.person.fullText);
+                            seatingData[rowIndex].middleSeats[seatIndex] = data.person;
+                        }
+                        else if (data.type === 'leave' && !person) {
+                            leavePeople.splice(data.index, 1);
+                            seatingData[rowIndex].middleSeats[seatIndex] = data.person;
+                        }
+                        else if (data.type === 'seat' && (data.rowIndex !== rowIndex || data.side !== 'middleSeats' || data.seatIndex !== seatIndex)) {
+                            const sourcePerson = seatingData[data.rowIndex][data.side][data.seatIndex];
+                            const targetPerson = seatingData[rowIndex].middleSeats[seatIndex];
+                            seatingData[data.rowIndex][data.side][data.seatIndex] = targetPerson;
+                            seatingData[rowIndex].middleSeats[seatIndex] = sourcePerson;
+                        }
+
+                        renderSeating('seatingArea');
+                        renderSeating('fullscreenSeatingArea');
+                        renderPeopleList();
+                        renderLeaveList();
+                        renderFullscreenLeaveList();
+                        updateStats();
+                        saveLayout();
+                    };
+
+                    seatCell.appendChild(seat);
+                    seatRow.appendChild(seatCell);
+                });
+
+                // 第二个过道
+                const aisle2 = document.createElement('div');
+                aisle2.className = 'aisle-column';
+                seatRow.appendChild(aisle2);
+
+                // 第三列（右侧9个座位）
                 row.rightSeats.forEach((person, seatIndex) => {
                     const seatCell = document.createElement('div');
                     seatCell.className = 'seat-cell';
@@ -1993,10 +2114,7 @@
                     const seat = document.createElement('div');
                     seat.className = 'seat';
                     
-                    if (isSeatDisabled(rowIndex, seatIndex)) {
-                        seat.classList.add('disabled');
-                    } 
-                    else if (person) {
+                    if (person) {
                         seat.classList.add('occupied');
                         seat.style.background = getDeptColor(person.dept);
                         
@@ -2032,80 +2150,75 @@
                         e.stopPropagation();
                     };
 
-                    if (!seat.classList.contains('disabled')) {
-                        seat.draggable = true;
+                    seat.draggable = true;
 
-                        seat.ondragstart = (e) => {
-                            if (seat.classList.contains('occupied')) {
-                                e.dataTransfer.setData("text", JSON.stringify({
-                                    type: 'seat',
-                                    rowIndex: rowIndex,
-                                    side: 'rightSeats',
-                                    seatIndex: seatIndex,
-                                    person: person
-                                }));
-                                seat.classList.add('dragging');
-                                setTimeout(() => {
-                                    seat.classList.add('dragging');
-                                }, 0);
-                            }
-                        };
+                    seat.ondragstart = (e) => {
+                        if (seat.classList.contains('occupied')) {
+                            e.dataTransfer.setData("text", JSON.stringify({
+                                type: 'seat',
+                                rowIndex: rowIndex,
+                                side: 'rightSeats',
+                                seatIndex: seatIndex,
+                                person: person
+                            }));
+                            seat.classList.add('dragging');
+                        }
+                    };
 
-                        seat.ondragend = (e) => {
-                            seat.classList.remove('dragging');
+                    seat.ondragend = (e) => {
+                        seat.classList.remove('dragging');
+                        seat.classList.remove('drag-over');
+                        seat.classList.remove('swap-target');
+                        document.querySelectorAll('.seat').forEach(s => {
+                            s.classList.remove('swap-target');
+                        });
+                    };
+
+                    seat.ondragover = (e) => {
+                        e.preventDefault();
+                        if (seat.classList.contains('occupied')) {
+                            seat.classList.add('swap-target');
+                        } else {
+                            seat.classList.add('drag-over');
+                        }
+                    };
+
+                    seat.ondragleave = (e) => {
+                        if (!e.currentTarget.contains(e.relatedTarget)) {
                             seat.classList.remove('drag-over');
                             seat.classList.remove('swap-target');
-                            document.querySelectorAll('.seat').forEach(s => {
-                                s.classList.remove('swap-target');
-                            });
-                        };
+                        }
+                    };
 
-                        seat.ondragover = (e) => {
-                            e.preventDefault();
-                            if (seat.classList.contains('occupied')) {
-                                seat.classList.add('swap-target');
-                            } else {
-                                seat.classList.add('drag-over');
-                            }
-                        };
+                    seat.ondrop = (e) => {
+                        e.preventDefault();
+                        seat.classList.remove('drag-over');
+                        seat.classList.remove('swap-target');
 
-                        seat.ondragleave = (e) => {
-                            if (!e.currentTarget.contains(e.relatedTarget)) {
-                                seat.classList.remove('drag-over');
-                                seat.classList.remove('swap-target');
-                            }
-                        };
+                        const data = JSON.parse(e.dataTransfer.getData("text"));
+                        if (data.type === 'person' && !person) {
+                            availablePeople = availablePeople.filter(p => p.fullText !== data.person.fullText);
+                            seatingData[rowIndex].rightSeats[seatIndex] = data.person;
+                        }
+                        else if (data.type === 'leave' && !person) {
+                            leavePeople.splice(data.index, 1);
+                            seatingData[rowIndex].rightSeats[seatIndex] = data.person;
+                        }
+                        else if (data.type === 'seat' && (data.rowIndex !== rowIndex || data.side !== 'rightSeats' || data.seatIndex !== seatIndex)) {
+                            const sourcePerson = seatingData[data.rowIndex][data.side][data.seatIndex];
+                            const targetPerson = seatingData[rowIndex].rightSeats[seatIndex];
+                            seatingData[data.rowIndex][data.side][data.seatIndex] = targetPerson;
+                            seatingData[rowIndex].rightSeats[seatIndex] = sourcePerson;
+                        }
 
-                        seat.ondrop = (e) => {
-                            e.preventDefault();
-                            seat.classList.remove('drag-over');
-                            seat.classList.remove('swap-target');
-
-                            const data = JSON.parse(e.dataTransfer.getData("text"));
-                            if (data.type === 'person' && !person) {
-                                availablePeople = availablePeople.filter(p => p.fullText !== data.person.fullText);
-                                seatingData[rowIndex].rightSeats[seatIndex] = data.person;
-                            }
-                            else if (data.type === 'leave' && !person) {
-                                leavePeople.splice(data.index, 1);
-                                seatingData[rowIndex].rightSeats[seatIndex] = data.person;
-                            }
-                            else if (data.type === 'seat' && (data.rowIndex !== rowIndex || data.side !== 'rightSeats' || data.seatIndex !== seatIndex)) {
-                                const sourcePerson = seatingData[data.rowIndex][data.side][data.seatIndex];
-                                const targetPerson = seatingData[rowIndex].rightSeats[seatIndex];
-                                seatingData[data.rowIndex][data.side][data.seatIndex] = targetPerson;
-                                seatingData[rowIndex].rightSeats[seatIndex] = sourcePerson;
-                            }
-
-                            renderSeating('seatingArea');
-                            renderSeating('fullscreenSeatingArea');
-                            renderPeopleList();
-                            renderLeaveList();
-                            renderFullscreenLeaveList();
-                            updateStats();
-                            saveLayout();
-                        };
-                    }
+                        renderSeating('seatingArea');
+                        renderSeating('fullscreenSeatingArea');
+                        renderPeopleList();
+                        renderLeaveList();
+                        renderFullscreenLeaveList();
+                        updateStats();
+                        saveLayout();
+                    };
 
                     seatCell.appendChild(seat);
                     seatRow.appendChild(seatCell);
@@ -2124,21 +2237,19 @@
             document.body.style.overflow = 'hidden';
         }
 
-         function closeFullscreen() {
+        function closeFullscreen() {
             const overlay = document.getElementById('fullscreenOverlay');
             overlay.classList.remove('active');
             document.body.style.overflow = 'auto';
         }
 
-        // 新增：ESC 键退出全屏
+        // ESC 键退出全屏
         document.addEventListener('keydown', function(event) {
-            // 检测 ESC 键（keyCode 27 或 key === 'Escape'）
             if (event.key === 'Escape' || event.keyCode === 27) {
                 const overlay = document.getElementById('fullscreenOverlay');
-                // 如果全屏模式是激活的，则关闭
                 if (overlay && overlay.classList.contains('active')) {
                     closeFullscreen();
-                    event.preventDefault(); // 阻止默认行为
+                    event.preventDefault();
                 }
             }
         });
@@ -2149,57 +2260,64 @@
                 row.leftSeats.forEach(p => {
                     if (p) occupied++;
                 });
+                row.middleSeats.forEach(p => {
+                    if (p) occupied++;
+                });
                 row.rightSeats.forEach(p => {
                     if (p) occupied++;
                 });
             });
-            const total = 240;
+            const total = 243;
             const availableSeats = total - occupied;
             const remainingPeople = availablePeople.length;
             const leaveCount = leavePeople.length;
 
-            document.getElementById('totalSeats').textContent = 240;
+            document.getElementById('totalSeats').textContent = 243;
             document.getElementById('occupiedSeats').textContent = occupied;
             document.getElementById('availableSeats').textContent = availableSeats;
             document.getElementById('remainingPeople').textContent = remainingPeople;
             document.getElementById('leaveCount').textContent = leaveCount;
         }
-        
 
         function autoAssign() {
-    if (availablePeople.length === 0) {
-        alert('暂无待分配人员！');
-        return;
-    }
-    if (!confirm(`确定将${availablePeople.length}名待分配人员按导入顺序自动分配到可用座位吗？`)) {
-        return;
-    }
-
-    // 修改：按导入顺序分配，不打乱
-    let peopleToAssign = [...availablePeople];
-
-    seatingData.forEach((row, rowIndex) => {
-        row.leftSeats.forEach((person, seatIndex) => {
-            if (!person && !isSeatDisabled(rowIndex, seatIndex) && peopleToAssign.length > 0) {
-                seatingData[rowIndex].leftSeats[seatIndex] = peopleToAssign.shift();
+            if (availablePeople.length === 0) {
+                alert('暂无待分配人员！');
+                return;
             }
-        });
-        row.rightSeats.forEach((person, seatIndex) => {
-            if (!person && !isSeatDisabled(rowIndex, seatIndex) && peopleToAssign.length > 0) {
-                seatingData[rowIndex].rightSeats[seatIndex] = peopleToAssign.shift();
+            if (!confirm(`确定将${availablePeople.length}名待分配人员按导入顺序自动分配到可用座位吗？`)) {
+                return;
             }
-        });
-    });
 
-    availablePeople = peopleToAssign;
-    renderPeopleList();
-    renderSeating('seatingArea');
-    renderSeating('fullscreenSeatingArea');
-    updateStats();
-    saveLayout();
+            let peopleToAssign = [...availablePeople];
 
-    alert(`自动分配完成！剩余${peopleToAssign.length}名人员无可用座位`);
-}
+            seatingData.forEach((row, rowIndex) => {
+                row.leftSeats.forEach((person, seatIndex) => {
+                    if (!person && peopleToAssign.length > 0) {
+                        seatingData[rowIndex].leftSeats[seatIndex] = peopleToAssign.shift();
+                    }
+                });
+                row.middleSeats.forEach((person, seatIndex) => {
+                    if (!person && peopleToAssign.length > 0) {
+                        seatingData[rowIndex].middleSeats[seatIndex] = peopleToAssign.shift();
+                    }
+                });
+                row.rightSeats.forEach((person, seatIndex) => {
+                    if (!person && peopleToAssign.length > 0) {
+                        seatingData[rowIndex].rightSeats[seatIndex] = peopleToAssign.shift();
+                    }
+                });
+            });
+
+            availablePeople = peopleToAssign;
+            renderPeopleList();
+            renderSeating('seatingArea');
+            renderSeating('fullscreenSeatingArea');
+            updateStats();
+            saveLayout();
+
+            alert(`自动分配完成！剩余${peopleToAssign.length}名人员无可用座位`);
+        }
+
         function init() {
             if (!loadLayout()) {
                 initSeatingStructure();
@@ -2221,7 +2339,4 @@
         window.onbeforeunload = saveLayout;
     </script>
 </body>
-
 </html>
-
-
